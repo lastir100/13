@@ -1,0 +1,44 @@
+[server]
+protocol = http
+http_port = 3000
+domain = localhost
+
+[security]
+admin_user = admin
+admin_password = admin
+
+[auth.anonymous]
+enabled = true
+org_role = Viewer
+
+[paths]
+provisioning = /etc/grafana/provisioning
+
+[datasources]
+default = prometheus
+
+[dataproxy]
+timeout = 300
+
+[log]
+mode = console
+
+[metrics]
+enabled = true
+interval_seconds = 10
+
+[dashboards]
+default_home_dashboard_path =
+
+[users]
+allow_sign_up = false
+
+# Automatically add Prometheus datasource
+[provisioning.datasources]
+apiVersion = 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://{{ groups['prometheus'][0] }}:9090
+    isDefault: true

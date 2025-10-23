@@ -1,0 +1,40 @@
+---
+- name: Ensure dependencies are installed
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - wget
+    state: present
+    update_cache: yes
+
+- name: Check if Kibana is already installed
+  ansible.builtin.stat:
+    path: /usr/share/kibana/bin/kibana
+  register: kibana_bin
+
+- name: Copy Kibana deb package
+  ansible.builtin.copy:
+    src: kibana-9.1.5-amd64.deb
+    dest: /tmp/kibana.deb
+    mode: '0644'
+  when: not kibana_bin.stat.exists
+
+- name: Install Kibana from deb
+  ansible.builtin.apt:
+    deb: /tmp/kibana.deb
+  when: not kibana_bin.stat.exists
+
+- name: Deploy Kibana configuration
+  ansible.builtin.template:
+    src: kibana.yml.j2
+    dest: /etc/kibana/kibana.yml
+    owner: root
+    group: kibana
+    mode: '0640'
+  notify: restart kibana
+
+- name: Enable and start Kibana service
+  ansible.builtin.systemd:
+    name: kibana
+    enabled: true
+    state: started

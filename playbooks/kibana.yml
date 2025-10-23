@@ -1,0 +1,5 @@
+- name: Развертывание Kibana
+  hosts: kibana
+  become: yes
+  roles:
+    - kibana

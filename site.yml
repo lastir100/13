@@ -1,0 +1,34 @@
+
+---
+- name: Развертывание web servers
+  hosts: webservers
+  become: true
+  roles:
+    - nginx
+    - node_exporter
+    - nginx_exporter
+    - filebeat
+
+- name: Развертывание Prometheus
+  hosts: prometheus
+  become: yes
+  roles:
+    - prometheus
+
+- name: Развертывание Grafana
+  hosts: grafana
+  become: yes
+  roles:
+    - grafana
+
+- name: Развертывание Elasticsearch
+  hosts: elasticsearch
+  become: yes
+  roles:
+    - elasticsearch
+
+- name: Развертывание Kibana
+  hosts: kibana
+  become: yes
+  roles:
+    - kibana

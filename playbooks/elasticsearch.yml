@@ -1,0 +1,5 @@
+- name: Развертывание Elasticsearch
+  hosts: elasticsearch
+  become: yes
+  roles:
+    - elasticsearch

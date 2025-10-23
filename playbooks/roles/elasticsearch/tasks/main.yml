@@ -1,0 +1,43 @@
+---
+- name: Check if Elasticsearch is already installed
+  ansible.builtin.stat:
+    path: /usr/share/elasticsearch/bin/elasticsearch
+  register: elasticsearch_bin
+
+- name: Copy Elasticsearch package
+  ansible.builtin.copy:
+    src: files/elasticsearch-9.1.5-amd64.deb
+    dest: /tmp/elasticsearch-9.1.5-amd64.deb
+  when: not elasticsearch_bin.stat.exists
+        
+- name: Install Elasticsearch from local deb
+  ansible.builtin.apt:
+    deb: /tmp/elasticsearch-9.1.5-amd64.deb
+    state: present
+  when: not elasticsearch_bin.stat.exists
+
+- name: Ensure Elasticsearch directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0755'
+  loop:
+    - /var/lib/elasticsearch
+    - /var/log/elasticsearch
+
+- name: Deploy Elasticsearch configuration
+  ansible.builtin.template:
+    src: elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+    owner: root
+    group: elasticsearch
+    mode: '0640'
+  notify: restart elasticsearch
+
+- name: Enable and start Elasticsearch
+  ansible.builtin.systemd:
+    name: elasticsearch
+    enabled: true
+    state: started
