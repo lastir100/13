@@ -1,0 +1,10 @@
+---
+- name: Configure web servers
+  hosts: webservers
+  become: true
+  roles:
+    - nginx
+    - node_exporter
+    - nginx_exporter
+    - filebeat
+

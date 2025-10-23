@@ -1,0 +1,6 @@
+---
+- name: Развертывание Grafana
+  hosts: grafana
+  become: yes
+  roles:
+    - grafana

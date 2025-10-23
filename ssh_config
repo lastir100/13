@@ -1,0 +1,8 @@
+Host 51.250.88.205  #адрес вашего бастиона
+  User user
+
+Host 10.0.*
+  ProxyJump 51.250.88.205
+  User user
+
+

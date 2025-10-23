@@ -1,0 +1,6 @@
+---
+- name: Развертывание Prometheus
+  hosts: prometheus
+  become: yes
+  roles:
+    - prometheus

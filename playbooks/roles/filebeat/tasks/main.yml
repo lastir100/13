@@ -1,0 +1,27 @@
+---
+- name: Copy Filebeat deb package
+  copy:
+    src: filebeat-9.1.5-amd64.deb
+    dest: /tmp/filebeat.deb
+    mode: '0644'
+
+- name: Install Filebeat from deb
+  apt:
+    deb: /tmp/filebeat.deb
+
+- name: Deploy Filebeat configuration
+  template:
+    src: filebeat.yml.j2
+    dest: /etc/filebeat/filebeat.yml
+    mode: '0644'
+
+- name: Enable Filebeat service
+  systemd:
+    name: filebeat
+    enabled: yes
+
+- name: Restart Filebeat service
+  systemd:
+    name: filebeat
+    state: restarted
+  notify: Restart Filebeat

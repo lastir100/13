@@ -1,0 +1,90 @@
+---
+- name: Ensure prometheus group exists
+  ansible.builtin.group:
+    name: prometheus
+    state: present
+
+- name: Ensure prometheus user exists
+  ansible.builtin.user:
+    name: prometheus
+    group: prometheus
+    shell: /usr/sbin/nologin
+    create_home: false
+    system: true
+
+- name: Download Prometheus archive
+  ansible.builtin.get_url:
+    url: "https://github.com/prometheus/prometheus/releases/download/v3.7.1/prometheus-3.7.1.linux-amd64.tar.gz"
+    dest: /tmp/prometheus.tar.gz
+    mode: '0644'
+
+- name: Extract Prometheus
+  ansible.builtin.unarchive:
+    src: /tmp/prometheus.tar.gz
+    dest: /opt/
+    remote_src: true
+    
+- name: Copy Prometheus binaries
+  ansible.builtin.copy:
+    src: "/opt/prometheus-3.7.1.linux-amd64/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    mode: '0755'
+    remote_src: true
+  loop:
+    - prometheus
+    - promtool
+
+- name: Create Prometheus config directory
+  ansible.builtin.file:
+    path: /etc/prometheus
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+
+- name: Deploy Prometheus configuration
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+  notify: restart prometheus
+
+- name: Create systemd unit for Prometheus
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/prometheus.service
+    content: |
+      [Unit]
+      Description=Prometheus Monitoring
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      User=prometheus
+      Group=prometheus
+      ExecStart=/usr/local/bin/prometheus \
+        --config.file=/etc/prometheus/prometheus.yml \
+        --storage.tsdb.path=/var/lib/prometheus \
+        --web.listen-address=:9090
+
+      Restart=on-failure
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: restart prometheus
+
+- name: Ensure Prometheus data dir exists
+  ansible.builtin.file:
+    path: /var/lib/prometheus
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+
+- name: Enable and start Prometheus
+  ansible.builtin.systemd:
+    name: prometheus
+    state: started
+    enabled: true
+

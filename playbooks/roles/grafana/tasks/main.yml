@@ -1,0 +1,43 @@
+---
+- name: Ensure dependencies are installed
+  ansible.builtin.apt:
+    name:
+      - adduser
+      - libfontconfig1
+      - musl
+      - wget
+    state: present
+    update_cache: yes
+
+- name: Check if Grafana is already installed
+  ansible.builtin.stat:
+    path: /usr/sbin/grafana-server
+  register: grafana_bin
+
+- name: Copy Grafana deb package
+  copy:
+    src: grafana-enterprise_12.2.0_17949786146_linux_amd64.deb
+    dest: /tmp/grafana.deb
+    mode: '0644'
+  when: not grafana_bin.stat.exists
+
+- name: Install Grafana from deb
+  ansible.builtin.apt:
+    deb: /tmp/grafana.deb
+  when: not grafana_bin.stat.exists
+
+- name: Deploy Grafana configuration
+  ansible.builtin.template:
+    src: grafana.ini.j2
+    dest: /etc/grafana/grafana.ini
+    owner: root
+    group: grafana
+    mode: '0640'
+  notify: restart grafana
+
+- name: Enable and start Grafana service
+  ansible.builtin.systemd:
+    name: grafana-server
+    enabled: true
+    state: started
+
